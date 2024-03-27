@@ -1,7 +1,9 @@
 package org.example;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.stream.Stream;
 
 
 public class CustomArrayListImpl<E> implements CustomArrayList<E> {
@@ -34,7 +36,7 @@ public class CustomArrayListImpl<E> implements CustomArrayList<E> {
 
     private void ensureCapacity(int addedLength) {
         int minCapacity = size() + addedLength;
-        if (minCapacity < capacity()) {
+        if (minCapacity > capacity()) {
             extendArray(minCapacity);
         }
     }
@@ -50,7 +52,8 @@ public class CustomArrayListImpl<E> implements CustomArrayList<E> {
             newCapacity += (newCapacity >> 1);
         }
         var temp = new Object[newCapacity];
-        System.arraycopy(arrayList, 0, temp, 0, arrayList.length);
+        System.arraycopy(arrayList, 0, temp, 0, oldCapacity);
+        arrayList = temp;
     }
 
     private void isInRage(int index) {
@@ -66,15 +69,14 @@ public class CustomArrayListImpl<E> implements CustomArrayList<E> {
         return size;
     }
 
-    public boolean addAll(Collection<? extends E> c) {
+    public void addAll(Collection<? extends E> c) {
         if (c.isEmpty()) {
-            return false;
+            return;
         }
         ensureCapacity(c.size());
         var cArr = c.toArray();
-        System.arraycopy(cArr, 0, arrayList, size(), 0);
+        System.arraycopy(cArr, 0, arrayList, size(), cArr.length);
         size += c.size() - 1;
-        return true;
     }
 
     public void clear() {
@@ -91,7 +93,7 @@ public class CustomArrayListImpl<E> implements CustomArrayList<E> {
 
     public void remove(int index) {
         isInRage(index);
-        System.arraycopy(arrayList, index + 1, arrayList, index, capacity() - 1);
+        System.arraycopy(arrayList, index + 1, arrayList, index, size() - index);
         size--;
     }
 
@@ -115,6 +117,35 @@ public class CustomArrayListImpl<E> implements CustomArrayList<E> {
     }
 
     public void sort(Comparator<? super E> c) {
+        var tempList = new Object[size() + 1];
+        System.arraycopy(arrayList, 0, tempList, 0, size() + 1);
+        tempList = quickSort(c, tempList);
+        System.arraycopy(tempList, 0, arrayList, 0, size() + 1);
+    }
 
+    @Override
+    public int length() {
+        return size();
+    }
+
+    private Object[] quickSort(Comparator<? super E> c, Object[] array) {
+        if (array.length == 0) {
+            return array;
+        }
+        var mid = (E) array[0];
+        return Stream.concat(
+                Stream.concat(
+                        Arrays.stream(
+                                quickSort(c,
+                                        Arrays.stream(array)
+                                                .filter(e -> c.compare((E) e, mid) < 0).toArray())
+                        ),
+                        Arrays.stream(array).filter(e -> e.equals(mid))
+                ), Arrays.stream(
+                        quickSort(c,
+                                Arrays.stream(array)
+                                        .filter(e -> c.compare((E) e, mid) > 0).toArray())
+                )
+        ).toArray();
     }
 }

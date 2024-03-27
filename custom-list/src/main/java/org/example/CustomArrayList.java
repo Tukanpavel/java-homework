@@ -6,7 +6,7 @@ import java.util.Comparator;
 public interface CustomArrayList<E> {
     void add(int index, E element);
 
-    boolean addAll(Collection<? extends E> c);
+    void addAll(Collection<? extends E> c);
 
     void clear();
 
@@ -19,4 +19,6 @@ public interface CustomArrayList<E> {
     Boolean remove(E o);
 
     void sort(Comparator<? super E> c);
+
+    int length();
 }
